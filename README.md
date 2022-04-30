@@ -1,4 +1,4 @@
-# Causal-Analysis : ROI-measurement-on-sponsored-Ads
+# Causal-Inference : ROI-measurement-on-sponsored-Ads
 
 **Project Goal**: We used Difference-In-Difference techniques to check whether there is causal affect between sponsored search ads and Organic clicks on Google search platform. 
 
