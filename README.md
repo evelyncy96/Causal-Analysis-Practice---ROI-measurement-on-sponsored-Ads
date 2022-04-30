@@ -13,4 +13,3 @@
 * Control: We defined all the other platforms (Bing, yahoo, ask) as control groups.
 * Treatment Period: Week 10
 
-**Methodology**
