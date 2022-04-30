@@ -1,6 +1,6 @@
 # Causal-Analysis : ROI-measurement-on-sponsored-Ads
 
-**Project Goal**: We used Difference-In-Difference techniques to check whether there is causal affect between sponsored search ads and Organic clicks on Google search platform. To be more specific, we want to know whether cancel the sponsored search ads will increase the number of clicks on the Organic search.
+**Project Goal**: We used Difference-In-Difference techniques to check whether there is causal affect between sponsored search ads and Organic clicks on Google search platform. 
 
 **Features**
 * **platform**: Search platform where the ads were released
