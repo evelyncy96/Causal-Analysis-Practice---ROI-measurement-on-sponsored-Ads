@@ -1,6 +1,6 @@
 ---
-title: "Causal Analysis HW2"
-author: "Haochun Niu , Runan Cao, Shuyun Liu, Chuyun Hsiao"
+title: "Causal Analysis"
+author: "Chu-Yun Hsiao, Haochun Niu , Runan Cao, Shuyun Liu"
 output:
   pdf_document:
     latex_engine: xelatex
