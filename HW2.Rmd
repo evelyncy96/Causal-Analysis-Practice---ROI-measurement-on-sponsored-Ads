@@ -1,0 +1,115 @@
+---
+title: "Causal Analysis HW2"
+author: "Haochun Niu , Runan Cao, Shuyun Liu, Chuyun Hsiao"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  word_document: default
+  html_document: default
+header-includes: \usepackage{setspace}\doublespacing
+fontsize: 12pt
+---
+## (a)   What is Wrong with Bob’s RoI Calculation? 
+
+**Based on Bob's ROI calculation, he says "the average probability of making a purchase from a website is 12%". Bob considers CTR (click-through rate) as a conversion on the landing page. The CTR in this case is Ad Clicks / (Sponsored Clicks + Organic Clicks). However, this formula ignores people who never click on any sponsored or organic searches.**
+
+**Further, if we dig into how Bob finds customers who click on his ads. For those customers who use "Bazaar" to search and then click on an ad, they are already using Bazaar to search. Even if it wasn't added, they should have clicked on the link in the organic listing because they've specifically entered "Bazaar" in the search bar. Bazaar is able to acquire this group of customers for free.**
+
+## (b)Define the Treatment and Control. 
+
+**In this scenario, the unit of observation is the weekly traffic from each platform. We set the searching platform Google as a treatment group, and all the other platforms (Bing, yahoo, ask) as control groups.**
+
+## (c) Consider a First Difference Estimate.
+
+**We built a regression model (avg_org = beta_0 +beta_1 After) on the treated group (Google). After is a dummy variable representing the intervention.The coefficient beta_1  is equal to 4277.3, which indicates an average increase of 4277.3 in average organic clicks after stopping sponsored search ads. Before the intervention, the mean of average organic click is 2266.7. Therefore, the percentage change is equal to 188.7%.**
+
+**However, it is not a good idea to solely rely on this number, as the target variable (average organic clicks) will naturally change over time. Indeed, the beta_1 estimate have a high probability of amplifying the causal effect of the intervention. Comparing just the before and after of treated units is unreliable. Instead, we should have a control group to represent the counterfactual to capture what would have happened without the intervention.**
+
+```{r,message=FALSE}
+library(tidyverse)
+library(caret)
+```
+
+```{r,message=FALSE}
+# Prepare Data 
+df<-read_csv("did_sponsored_ads.csv")
+df<-df%>%select(platform,week,avg_org)
+df$treatment<-ifelse(df$platform=='goog','treatment','control')
+df$treatment<-as.factor(df$treatment)
+df<-df%>%select(-platform)
+df$After<-ifelse(df$week>9,'After','Before')
+df$week<-as.factor(df$week)
+df$After<-factor(df$After,level=unique(c('Before','After')))
+
+```
+
+```{r}
+model1<-lm(avg_org~After,data=filter(df,treatment=='treatment'))
+summary(model1)
+df %>% group_by(treatment,After) %>% summarise(mean_avg_org = mean(avg_org))
+per_change = (4277.3)/2266.7 *100
+per_change 
+```
+
+## (d)	Calculate the Difference-in-Differences. 
+
+**Before performing the DiD analysis, we check whether the parallel trend assumption holds. We found that the interaction from week 1 to week 9 was not significant, suggesting that the parallelism hypothesis was satisfied. Given that the 10-12 week interaction was significant at the 10% significance level, we concluded that the treatment effect was effective.**
+
+**We built a regression model (avg_org = beta_0 + beta_1 After + beta_2 treatment + beta_3 Aftertreatment ) ,where After represents the intervention and treatment represents the treatment group. beta_3 indicates the changes in average organic click over time between the treatment group and the control group. Therefore the causal effect of stopping sponsored serving is 2293.2. If we stopped sponsored search ads, the average organic clicks would have increased by 2293.2 on average.**
+
+**This estimate is now smaller than the previous one, indicating that the previous estimate was not accurate. If we only consider treated units, we would incorrectly amplify causal effects.**
+
+```{r}
+# Check Parallel Trends Assumptions Before DiD Analysis
+model2<-lm(avg_org~week*treatment,data=df)
+summary(lm(model2))
+```
+
+```{r}
+model3<-lm(avg_org~ After + treatment + After*treatment,data=df)
+summary(model3)
+```
+
+```{r}
+plot_df<-df%>%group_by(week,treatment)%>%summarise('Organic Search'=mean(avg_org))
+ggplot(plot_df,aes(x=as.numeric(week),y=`Organic Search`,group=treatment,color=treatment))+
+  geom_line()+
+  geom_vline(xintercept = 10,linetype=2,alpha=0.6)+
+  scale_x_continuous(breaks = c(0,2,4,6,8,10,12))+
+  labs(x='Week',title = 'Difference in Difference Plot')
+```
+
+## (e) Given Your Treatment Effect Estimate, Fix Bob’s RoI Calculation
+
+**To get Google's average sponsored clicks after week 10, we built a model to test whether Google's average sponsored clicks differed from all other platforms from week 1 to week 9 (avg_spons = beta_0 + beta_1 treatment). Because the p-value for beta_1 was very large at 0.063, we concluded that there was no significant difference in mean sponsored clicks between the treatment and control groups. Therefore, we used the average number of sponsored clicks in the control group after week 10 (9855.9) to infer the treatment group.**
+
+**If google did not stop the sponsored ads, the average sponsored clicks would be 9855.9 However, this number includes parts of organic clicks (2293.2). Therefore, the ROI should be adjusted by (9855.9 - 2293.2)/9855.9. The ajusted ROI is equal to 245.54%**
+
+```{r,message=FALSE}
+# prepare the data
+df1<-read_csv("did_sponsored_ads.csv")
+df1<-df1%>%select(platform,week,avg_spons)
+df1$treatment<-ifelse(df1$platform=='goog','treatment','control')
+df1$treatment<-as.factor(df1$treatment)
+df1<-df1%>%select(-platform)
+df1$After<-ifelse(df1$week>9,'After','Before')
+df1$week<-as.factor(df1$week)
+df1$After<-factor(df1$After,level=unique(c('Before','After')))
+```
+
+```{r}
+# #Whether the average sponsor differs between control and treatment group before week 10?
+model4<-lm(avg_spons~treatment,data=filter(df1,After=='Before'))
+summary(model4)
+#Given that the p-value for the treatment feature is large, we conclude that average sponsors for treatment and control group are not different before week 10.
+```
+
+```{r}
+#Hence, we use control group's average sponsor to estimate treatment group's average sponsor after week 9 
+tem<-df1%>%filter(After=='After' & treatment=='control')
+mean(tem$avg_spons)
+asj_ROI= (2.52-0.6) * (9855.9-2293.2)/(9855.9 * 0.60)
+asj_ROI
+```
+
+
