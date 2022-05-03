@@ -1,6 +1,6 @@
 # Causal-Inference : ROI-measurement-on-sponsored-Ads
 
-**Project Goal**: Check whether there is causal effect between sponsored search ads and organic clicks on Google search platform using Difference-In-Difference techniques. 
+**Question to Address**: Will the organic clicks on Google search platform increase because of canceling the sponsored search ads?
 
 **Features**
 * **platform**: Search platform where the ads were released
@@ -9,7 +9,11 @@
 * **avg_org**: Average number of clicks on the Organic search
 
 **Experiment**
-* **Treatment Period**: Week 10
-* **Treatment**: We defined the searching platform Google as a treatment group. 
-* **Control**: We defined all the other platforms (Bing, yahoo, ask) as control groups.
+
+* **Unit of Analysis**: 
+* **Treatment**: 
+* **Period of Analysis**: 
+* **Possible Outcomes**: 
+* **Techniques**: Difference-In-Difference
+
 
